@@ -7,6 +7,10 @@ export interface TimeSeriesItem {
     readonly dailyLabConfirmedCases: number;
 }
 
+export interface EstimatedTimeSeriesItem extends TimeSeriesItem {
+    readonly r: number;
+}
+
 export interface RawTimeSeriesItem {
     readonly areaName: string;
     readonly dailyLabConfirmedCases: number;
@@ -70,9 +74,24 @@ export const getGroup = (ts: RawTimeSeriesItem[]): GroupedTimeSeries =>
 
 export const getData = R.pipe(getTimeSeries, getGroup);
 
+export const sumCases = R.pipe(R.map(R.prop('dailyLabConfirmedCases')), R.sum)
+
+function *rseries(ts: TimeSeriesItem[]): Generator<EstimatedTimeSeriesItem> {
+    for(let i=0; i< ts.length; i++) {
+        const slice1 = ts.slice(i, i+7);
+        const slice2 = ts.slice(i+1, i+8);
+        const sum1 = sumCases(slice1);
+        const sum2 = sumCases(slice2);
+        yield {
+            ...ts[i],
+            r: sum1/sum2
+        }
+    }
+}
+
 export const entryPoint = (pathname: string) => {
     const d = getData(pathname);
-    const e = Array.from(filledTimeSeries(d['York']));
+    const e = Array.from(rseries(Array.from(filledTimeSeries(d['York']))));
     console.log(JSON.stringify(e));
 };
 
