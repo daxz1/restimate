@@ -6,6 +6,8 @@ A React application and an api for presenting graphs of estimated R values, base
 
 Data comes from https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json
 
+You can see this at [https://r.winter.cx](https://r.winter.cx)
+
 ## Method
 
 1. Days with no data are assumed to have zero cases
