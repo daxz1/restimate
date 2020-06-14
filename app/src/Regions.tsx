@@ -8,10 +8,9 @@ interface Region {
 }
 
 const getRegions = async (): Promise<Region[]> => {
-    return [{
-        slug: 'york',
-        name: 'York',
-    }]
+    const response = await fetch('/api/regions');
+    console.log(response);
+    return await response.json();
 }
 
 export default () => {
