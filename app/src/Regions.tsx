@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { sortBy, prop } from 'ramda';
-import { Link } from "react-router-dom";
+import { LinkContainer } from 'react-router-bootstrap';
+import { Link } from 'react-router-dom';
+import Nav from 'react-bootstrap/Nav';
 
 interface Region {
     readonly slug: string;
@@ -18,7 +20,9 @@ export default () => {
     const [regions, setRegions] = useState(defaultRegions);
     useEffect(() => {getRegions().then(setRegions)}, []);
 
-    return <ol>
-            {sortBy(prop('name'), regions).map((r: Region) => <li key="{r.slug}"><Link to={`/region/${r.slug}`}>{r.name}</Link></li>)}
-        </ol>;
+    return <Nav className="flex-column">
+            {sortBy(prop('name'), regions).map((r: Region) => (
+                <Nav.Item><Link to={`/region/${r.slug}`}>{r.name}</Link></Nav.Item>
+            ))}
+            </Nav>
 }

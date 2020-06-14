@@ -52,24 +52,24 @@ export const loadDataFromUrl = async (url: string): Promise<any> => {
     return await response.json();
 }
 
-export const getTimeSeries = (data: any): RawTimeSeriesItem[] => {
+export const loadTimeSeries = (data: any): RawTimeSeriesItem[] => {
     const t = R.map(R.pick(['areaName', 'specimenDate', 'dailyLabConfirmedCases']), data.ltlas);
     return (t as unknown) as RawTimeSeriesItem[];
 };
 
-export const ntsi2tsi = ({ dailyLabConfirmedCases, specimenDate }: RawTimeSeriesItem): TimeSeriesItem => ({
-    specimenDate: moment(specimenDate),
-    dailyLabConfirmedCases,
+export const momentize = (t: RawTimeSeriesItem): TimeSeriesItem => ({
+    ...t,
+    specimenDate: moment(t.specimenDate),
 });
 
 export const sortedTimeSeries = (i: TimeSeriesItem[]): TimeSeriesItem[] =>
     R.sortWith([R.descend(R.prop('specimenDate'))], i);
 
-export const getGroup = (ts: RawTimeSeriesItem[]): GroupedTimeSeries =>
+export const group = (ts: RawTimeSeriesItem[]): GroupedTimeSeries =>
     R.map<GroupedTimeSeries, GroupedTimeSeries>(
         sortedTimeSeries,
         R.map<{ [index: string]: RawTimeSeriesItem[] }, { [index: string]: TimeSeriesItem[] }>(
-            R.map(ntsi2tsi),
+            R.map(momentize),
             R.groupBy(R.prop('areaName'), ts),
         ),
     );
@@ -115,13 +115,7 @@ export const fill = (ts: TimeSeriesItem[]): TimeSeriesItem[] => R.reverse(R.redu
 export const estr =  (ts: SmoothedTimeSeriesItem[]): EstimatedTimeSeriesItem[] => 
     R.reduceRight(rcalculator, [], ts)
 
-// export const fillAndSmooth = (series: TimeSeriesItem[]): EstimatedTimeSeriesItem[] =>
-//     estr((smooth(fill(series))));
-
-export const fillAndSmooth = R.compose(estr, smooth, fill)
-
-
-export const slugify = (s: string): string => s.toLowerCase().replace(/ /, '-');
+export const slugify = (s: string): string => s.toLowerCase().replace(/ /g, '-');
 
 export const makeApiReady = (g: GroupedEstimatedTimeSeries): APIReady => {
     const d: APIReady = {};
@@ -129,7 +123,7 @@ export const makeApiReady = (g: GroupedEstimatedTimeSeries): APIReady => {
         const slug = slugify(name);
         const region = g[name];
         const labels = R.reverse(R.map((x: moment.Moment) => x.format(), R.map(R.prop('specimenDate'), region)));
-        const cases = R.reverse(R.map(R.prop('dailyLabConfirmedCases'), region));
+        const cases = R.reverse(R.map(R.prop('smoothed'), region));
         const estr = R.reverse(R.map(R.prop('r'), region));
         d[slug] = {
             slug,
@@ -144,7 +138,7 @@ export const makeApiReady = (g: GroupedEstimatedTimeSeries): APIReady => {
 
 export const getApiReadyData = async () => {
     const raw = await loadDataFromUrl(sourceUrl);
-    const d = R.pipe(getTimeSeries, getGroup)(raw);
-    const e = R.map<GroupedTimeSeries,GroupedEstimatedTimeSeries>(fillAndSmooth, d);
+    const d = R.pipe(loadTimeSeries, group)(raw);
+    const e = R.map<GroupedTimeSeries,GroupedEstimatedTimeSeries>(R.compose(estr, smooth, fill), d);
     return makeApiReady(e);
 };

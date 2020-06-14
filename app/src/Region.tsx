@@ -23,7 +23,7 @@ const options: Chartist.ILineChartOptions = {
     axisX: {
         divisor: 5,
         labelInterpolationFnc: (value: string, index: number) => 
-             index % 4 == 0 ? moment(value).format('D MMM'): null
+             index % 4 === 0 ? moment(value).format('D MMM'): null
         ,
     },
 };
