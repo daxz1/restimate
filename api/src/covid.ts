@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import * as R from 'ramda';
-import * as moment from 'moment';
+import moment from 'moment';
 import fetch from 'node-fetch';
 
 const incubationDays = 5;
@@ -92,8 +92,6 @@ export const getGroup = (ts: RawTimeSeriesItem[]): GroupedTimeSeries =>
         ),
     );
 
-export const getData = R.pipe(getTimeSeries, getGroup);
-
 export const sumCases = R.pipe(R.map(R.prop('dailyLabConfirmedCases')), R.sum)
 
 function *rseries(ts: TimeSeriesItem[]): Generator<EstimatedTimeSeriesItem> {
@@ -109,7 +107,7 @@ function *rseries(ts: TimeSeriesItem[]): Generator<EstimatedTimeSeriesItem> {
     }
 }
 
-function *smooth(ts: TimeSeriesItem[]) : Generator<TimeSeriesItem> {
+export function *smooth(ts: TimeSeriesItem[]) : Generator<TimeSeriesItem> {
     for(let i=0; i< ts.length; i++) {
         yield {
             ...ts[i],
@@ -146,7 +144,7 @@ export const makeApiReady = (g: GroupedEstimatedTimeSeries): APIReady => {
 
 export const getApiReadyData = async () => {
     const raw = await loadDataFromUrl(sourceUrl);
-    const d = getData(raw);
+    const d = R.pipe(getTimeSeries, getGroup)(raw);
     const e = R.map<GroupedTimeSeries,GroupedEstimatedTimeSeries>(fillAndSmooth, d);
     return makeApiReady(e);
 };

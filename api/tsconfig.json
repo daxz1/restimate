@@ -4,6 +4,7 @@
     "module": "commonjs",
     "lib": ["es2016", "es2017.object", "es2017.string", "dom"],
     "outDir": "lib",
+    "esModuleInterop": true,
     "declaration": false,
     "strict": true,
     "noImplicitAny": true,
