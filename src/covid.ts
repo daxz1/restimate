@@ -43,17 +43,6 @@ export interface APIReady {
     [slug: string]: Region
 }
 
-
-// startDate is the most recent date
-// endDate is the oldest date
-// the list starts at startDate
-// series contains confirmed cases for every day from then to endDate
-export interface FilledTimeSeries {
-    readonly startDate: moment.Moment;
-    readonly endDate: moment.Moment;
-    readonly series: number[];
-}
-
 export const loadDataFromPath = async (pathname: string): Promise<any> => {
     return JSON.parse(readFileSync(pathname, 'utf-8'));
 }

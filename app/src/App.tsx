@@ -1,7 +1,6 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
 
-import Jumbotron from 'react-bootstrap/Jumbotron';
 import Container from 'react-bootstrap/Container';
 
 import Regions from './Regions';
@@ -18,6 +17,7 @@ const App: React.FC = () => {
     return (
         <Router>
             <Container className="p-3">
+                <Link to="/">Home</Link>
                 <Switch>
                     <Route path="/" exact component={Index} />
                     <Route path="/region/:slug" component={Region} />
