@@ -1,2 +1,0 @@
-# restimate
-Estimates of R

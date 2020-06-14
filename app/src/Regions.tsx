@@ -20,9 +20,9 @@ export default () => {
     const [regions, setRegions] = useState(defaultRegions);
     useEffect(() => {getRegions().then(setRegions)}, []);
 
-    return <Nav className="flex-column">
+    return <Nav style={{backgroundColor: '#f7f7f7', borderRight: '1px solid #ececec', overflow: 'auto', maxHeight: '100vh', flexWrap: 'nowrap'}} className="flex-column">
             {sortBy(prop('name'), regions).map((r: Region) => (
-                <Nav.Item><Link to={`/region/${r.slug}`}>{r.name}</Link></Nav.Item>
+                <Nav.Item style={{width: '100%'}}><Link to={`/region/${r.slug}`}>{r.name}</Link></Nav.Item>
             ))}
             </Nav>
 }

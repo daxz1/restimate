@@ -20,7 +20,6 @@ app.use(morgan('tiny'));
 app.use(express.static(path.join(__dirname, '../build')))
 app.get('/ping', (req, res) => res.send('pong'))
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../build', 'index.html')))
 
 app.get('/api/regions', (req, res) => 
     res.json(map(pick(['slug', 'name']), values(data)))
@@ -29,6 +28,8 @@ app.get('/api/regions', (req, res) =>
 app.get('/api/region/:region', (req, res) => 
     res.json(data[req.param('region')])
 )
+
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../build', 'index.html')))
 
 fetch().then(() => {
     app.listen(process.env.PORT || 4000, () => console.log('listening...'));
