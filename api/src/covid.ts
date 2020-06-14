@@ -43,8 +43,13 @@ export interface Region {
     readonly estr: number[];
 }
 
+export interface Metadata {
+    lastUpdatedAt: string;
+    disclaimer: string;
+}
+
 export interface APIReady {
-    [slug: string]: Region
+    [slug: string]: Region;
 }
 
 export const loadDataFromUrl = async (url: string): Promise<any> => {
@@ -138,7 +143,11 @@ export const makeApiReady = (g: GroupedEstimatedTimeSeries): APIReady => {
 
 export const getApiReadyData = async () => {
     const raw = await loadDataFromUrl(sourceUrl);
+    const metadata = raw.metadata;
     const d = R.pipe(loadTimeSeries, group)(raw);
     const e = R.map<GroupedTimeSeries,GroupedEstimatedTimeSeries>(R.compose(estr, smooth, fill), d);
-    return makeApiReady(e);
+    return {
+        data: makeApiReady(e),
+        metadata,
+    }
 };

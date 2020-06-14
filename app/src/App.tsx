@@ -1,19 +1,34 @@
-import React, {Fragment} from 'react';
+import React, {Fragment, useState, useEffect} from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import { LinkContainer } from 'react-router-bootstrap';
 import Container from 'react-bootstrap/Container';
 import Navbar from 'react-bootstrap/Navbar';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
-
+import moment from 'moment';
 import Regions from './Regions';
 import Region from './Region';
 
-const Intro = () => <Fragment>
+export interface Metadata {
+    lastUpdatedAt: string;
+    disclaimer: string;
+}
+
+const getMetadata = async (): Promise<Metadata> => {
+    const response = await fetch('/api/metadata');
+    return await response.json();
+}
+
+const Intro = () => {
+    const [metadata, setMetadata] = useState({lastUpdatedAt: "", disclaimer: ""});
+    useEffect(() => {getMetadata().then(setMetadata)}, []);
+
+    return <Fragment>
     <h2>Estimates for 'R'</h2>
     <p>This site shows estimated vales for the effective reproduction number <strong>R</strong> for the COVID-19 disease. Choose a region on the left to see a chart.</p>
     <h3>Source data</h3>
-    <p>The data for this site comes from the UK Government, but is for only English regions. The raw data is available <a href="https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json">in JSON form</a></p>
+    <p>The source data is timestamped <strong>{moment(metadata.lastUpdatedAt).format("dddd, Do MMM YYYY, HH:mm")}</strong>. It is refreshed approximately every 8 hours.</p>
+    <p><em>{metadata.disclaimer}</em></p>
     <h3>Method</h3>
     <ul>
         <li>Days with no data are assumed to have zero cases</li>
@@ -28,6 +43,7 @@ const Intro = () => <Fragment>
     <p>You can find the source for this <a href="https://github.com/winjer/restimate">on Github</a>. Pull requests welcome.</p>
     <small>&copy; 2020, Doug Winter</small>
     </Fragment>
+}
 
 const App: React.FC = () => {
     return (

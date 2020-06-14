@@ -11,7 +11,6 @@ interface Region {
 
 const getRegions = async (): Promise<Region[]> => {
     const response = await fetch('/api/regions');
-    console.log(response);
     return await response.json();
 }
 
