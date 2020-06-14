@@ -13,7 +13,11 @@ export interface TimeSeriesItem {
     readonly dailyLabConfirmedCases: number;
 }
 
-export interface EstimatedTimeSeriesItem extends TimeSeriesItem {
+export interface SmoothedTimeSeriesItem extends TimeSeriesItem {
+    readonly smoothed: number;
+}
+
+export interface EstimatedTimeSeriesItem extends SmoothedTimeSeriesItem {
     readonly r: number;
 }
 
@@ -43,10 +47,6 @@ export interface APIReady {
     [slug: string]: Region
 }
 
-export const loadDataFromPath = async (pathname: string): Promise<any> => {
-    return JSON.parse(readFileSync(pathname, 'utf-8'));
-}
-
 export const loadDataFromUrl = async (url: string): Promise<any> => {
     const response = await fetch(url);
     return await response.json();
@@ -65,24 +65,6 @@ export const ntsi2tsi = ({ dailyLabConfirmedCases, specimenDate }: RawTimeSeries
 export const sortedTimeSeries = (i: TimeSeriesItem[]): TimeSeriesItem[] =>
     R.sortWith([R.descend(R.prop('specimenDate'))], i);
 
-function* filledTimeSeries(ts: TimeSeriesItem[]): Generator<TimeSeriesItem> {
-    let last = R.head(ts);
-    if (last) {
-        for (const i of ts) {
-            const t = last.specimenDate.clone();
-            while (t > i.specimenDate) {
-                t.subtract(1, 'day');
-                yield {
-                    specimenDate: t.clone(),
-                    dailyLabConfirmedCases: 0,
-                };
-            }
-            yield i;
-            last = i;
-        }
-    }
-}
-
 export const getGroup = (ts: RawTimeSeriesItem[]): GroupedTimeSeries =>
     R.map<GroupedTimeSeries, GroupedTimeSeries>(
         sortedTimeSeries,
@@ -92,33 +74,51 @@ export const getGroup = (ts: RawTimeSeriesItem[]): GroupedTimeSeries =>
         ),
     );
 
-export const sumCases = R.pipe(R.map(R.prop('dailyLabConfirmedCases')), R.sum)
-
-function *rseries(ts: TimeSeriesItem[]): Generator<EstimatedTimeSeriesItem> {
-    for(let i=0; i< ts.length; i++) {
-        const slice1 = ts.slice(i, i+smoothingDays);
-        const slice2 = ts.slice(i+incubationDays, i+incubationDays+smoothingDays);
-        const sum1 = sumCases(slice1);
-        const sum2 = sumCases(slice2);
-        yield {
-            ...ts[i],
-            r: sum1/sum2,
+export const filler = (acc: TimeSeriesItem[], t: TimeSeriesItem): TimeSeriesItem[] => {
+    if(acc.length > 0) {
+        const fill = [];
+        const last = acc[0].specimenDate.clone();
+        while(last.diff(t.specimenDate, 'days') > 1) {
+            last.subtract(1, 'day');
+            fill.unshift({
+                specimenDate: moment(last.format('YYYY-MM-DD')),
+                dailyLabConfirmedCases: 0,
+            })
         }
+        return [t, ...fill, ...acc]
     }
+    return [t]
 }
 
-export function *smooth(ts: TimeSeriesItem[]) : Generator<TimeSeriesItem> {
-    for(let i=0; i< ts.length; i++) {
-        yield {
-            ...ts[i],
-            dailyLabConfirmedCases: sumCases(ts.slice(i, i+smoothingDays))/smoothingDays,
-        }
-    }
-}
+export const smoothSum = (start: number, end: number) => (t: EstimatedTimeSeriesItem[]): number => 
+    R.sum(R.map(R.prop('smoothed'), t.slice(start, end)))
 
-export const fillAndSmooth = (series: TimeSeriesItem[]): EstimatedTimeSeriesItem[] =>
-    Array.from(rseries(Array.from(smooth(Array.from(filledTimeSeries(series))))));
+export const sumNow = smoothSum(0, smoothingDays - 1)
+export const sumThen = smoothSum(incubationDays, incubationDays+  smoothingDays)
 
+export const rcalculator = (t: SmoothedTimeSeriesItem, acc: EstimatedTimeSeriesItem[]): EstimatedTimeSeriesItem[] => [{
+    ...t,
+    r: (sumNow(acc) + t.smoothed) / sumThen(acc)
+}, ...acc]
+
+export const smoother = (t: TimeSeriesItem, acc: SmoothedTimeSeriesItem[], ): SmoothedTimeSeriesItem[] => [{
+        ...t,
+    smoothed: (R.sum(R.map(R.prop('dailyLabConfirmedCases'), R.take(smoothingDays-1, acc)))+ t.dailyLabConfirmedCases) / smoothingDays
+    }, ...acc
+]
+
+export const smooth = (ts: TimeSeriesItem[]): SmoothedTimeSeriesItem[] => 
+    R.reduceRight(smoother, [], ts)
+
+export const fill = (ts: TimeSeriesItem[]): TimeSeriesItem[] => R.reverse(R.reduce(filler, [], ts))
+
+export const estr =  (ts: SmoothedTimeSeriesItem[]): EstimatedTimeSeriesItem[] => 
+    R.reduceRight(rcalculator, [], ts)
+
+// export const fillAndSmooth = (series: TimeSeriesItem[]): EstimatedTimeSeriesItem[] =>
+//     estr((smooth(fill(series))));
+
+export const fillAndSmooth = R.compose(estr, smooth, fill)
 
 
 export const slugify = (s: string): string => s.toLowerCase().replace(/ /, '-');

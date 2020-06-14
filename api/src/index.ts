@@ -1,4 +1,4 @@
-import * as express from 'express';
+import express from 'express';
 import { APIReady, getApiReadyData } from './covid';
 import { map, pick, values } from 'ramda';
 
