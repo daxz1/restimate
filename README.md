@@ -32,3 +32,7 @@ Once it is all running you should be launched into your react dev server as usua
 
     docker build .
 
+## Contact
+
+[Doug Winter](mailto:doug@winter.cx)
+
