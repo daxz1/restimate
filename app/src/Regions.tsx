@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { sortBy, prop } from 'ramda';
-import { LinkContainer } from 'react-router-bootstrap';
 import { Link } from 'react-router-dom';
 import Nav from 'react-bootstrap/Nav';
 

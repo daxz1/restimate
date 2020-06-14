@@ -1,6 +1,5 @@
 import React, {Fragment, useState, useEffect} from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import { LinkContainer } from 'react-router-bootstrap';
 import Container from 'react-bootstrap/Container';
 import Navbar from 'react-bootstrap/Navbar';
 import Col from 'react-bootstrap/Col';
@@ -25,7 +24,9 @@ const Intro = () => {
 
     return <Fragment>
     <h2>Estimates for 'R'</h2>
-    <p>This site shows estimated vales for the effective reproduction number <strong>R</strong> for the COVID-19 disease. Choose a region on the left to see a chart.</p>
+    <p>This site shows estimated values for the effective reproduction number <strong>R</strong> for COVID-19 in the UK.</p>
+    <h3>How to use</h3>
+    <p>Choose a region on the left to see a chart.</p>
     <h3>Source data</h3>
     <p>The source data is timestamped <strong>{moment(metadata.lastUpdatedAt).format("dddd, Do MMM YYYY, HH:mm")}</strong>. It is refreshed approximately every 8 hours.</p>
     <p><em>{metadata.disclaimer}</em></p>

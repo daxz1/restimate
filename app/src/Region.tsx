@@ -4,6 +4,34 @@ import Chartist from 'chartist';
 import { useParams } from 'react-router-dom';
 import moment from 'moment';
 
+const defaultOptions = {
+    class: 'ct-target-line',
+    value: null
+};
+
+// from chartist-plugins-targetline
+Chartist.plugins = Chartist.plugins || {};
+Chartist.plugins.ctTargetLine = function(options: any) {
+
+    options = Chartist.extend({}, defaultOptions, options);
+
+    return function ctTargetLine(chart: any) {
+        const projectY = (chartRect: any, bounds: any, value: any) => 
+					chartRect.y1 - (chartRect.height() / bounds.max * value)
+
+        chart.on('created', function (context: any) {
+          var targetLineY = projectY(context.chartRect, context.bounds, options.value);
+
+          context.svg.elem('line', {
+            x1: context.chartRect.x1,
+            x2: context.chartRect.x2,
+            y1: targetLineY,
+            y2: targetLineY
+          }, options.class);
+        });
+    };
+  };
+
 const graphData = async (slug: string, days: number) => {
     const response = await fetch(`/api/region/${slug}`);
     const data = await response.json();
@@ -20,6 +48,7 @@ const graphData = async (slug: string, days: number) => {
 const options: Chartist.ILineChartOptions = {
     low: 0,
     height: 600,
+    plugins: [Chartist.plugins.ctTargetLine({value: 1})],
     axisX: {
         divisor: 5,
         labelInterpolationFnc: (value: string, index: number) => 

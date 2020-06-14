@@ -1,0 +1,6 @@
+.ct-target-line {
+    stroke: blue;
+    stroke-width: 2px;
+    stroke-dasharray: 4px;
+    shape-rendering: crispEdges;
+}

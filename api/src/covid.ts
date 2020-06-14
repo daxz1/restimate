@@ -55,7 +55,7 @@ export interface APIReady {
 export const loadDataFromUrl = async (url: string): Promise<any> => {
     const response = await fetch(url);
     return await response.json();
-}
+};
 
 export const loadTimeSeries = (data: any): RawTimeSeriesItem[] => {
     const t = R.map(R.pick(['areaName', 'specimenDate', 'dailyLabConfirmedCases']), data.ltlas);
@@ -80,45 +80,51 @@ export const group = (ts: RawTimeSeriesItem[]): GroupedTimeSeries =>
     );
 
 export const filler = (acc: TimeSeriesItem[], t: TimeSeriesItem): TimeSeriesItem[] => {
-    if(acc.length > 0) {
+    if (acc.length > 0) {
         const fill = [];
         const last = acc[0].specimenDate.clone();
-        while(last.diff(t.specimenDate, 'days') > 1) {
+        while (last.diff(t.specimenDate, 'days') > 1) {
             last.subtract(1, 'day');
             fill.unshift({
                 specimenDate: moment(last.format('YYYY-MM-DD')),
                 dailyLabConfirmedCases: 0,
-            })
+            });
         }
-        return [t, ...fill, ...acc]
+        return [t, ...fill, ...acc];
     }
-    return [t]
-}
+    return [t];
+};
 
-export const smoothSum = (start: number, end: number) => (t: EstimatedTimeSeriesItem[]): number => 
-    R.sum(R.map(R.prop('smoothed'), t.slice(start, end)))
+export const smoothSum = (start: number, end: number) => (t: EstimatedTimeSeriesItem[]): number =>
+    R.sum(R.map(R.prop('smoothed'), t.slice(start, end)));
 
-export const sumNow = smoothSum(0, smoothingDays - 1)
-export const sumThen = smoothSum(incubationDays, incubationDays+  smoothingDays)
+export const sumNow = smoothSum(0, smoothingDays - 1);
+export const sumThen = smoothSum(incubationDays, incubationDays + smoothingDays);
 
-export const rcalculator = (t: SmoothedTimeSeriesItem, acc: EstimatedTimeSeriesItem[]): EstimatedTimeSeriesItem[] => [{
-    ...t,
-    r: (sumNow(acc) + t.smoothed) / sumThen(acc)
-}, ...acc]
-
-export const smoother = (t: TimeSeriesItem, acc: SmoothedTimeSeriesItem[], ): SmoothedTimeSeriesItem[] => [{
+export const rcalculator = (t: SmoothedTimeSeriesItem, acc: EstimatedTimeSeriesItem[]): EstimatedTimeSeriesItem[] => [
+    {
         ...t,
-    smoothed: (R.sum(R.map(R.prop('dailyLabConfirmedCases'), R.take(smoothingDays-1, acc)))+ t.dailyLabConfirmedCases) / smoothingDays
-    }, ...acc
-]
+        r: (sumNow(acc) + t.smoothed) / sumThen(acc),
+    },
+    ...acc,
+];
 
-export const smooth = (ts: TimeSeriesItem[]): SmoothedTimeSeriesItem[] => 
-    R.reduceRight(smoother, [], ts)
+export const smoother = (t: TimeSeriesItem, acc: SmoothedTimeSeriesItem[]): SmoothedTimeSeriesItem[] => [
+    {
+        ...t,
+        smoothed:
+            (R.sum(R.map(R.prop('dailyLabConfirmedCases'), R.take(smoothingDays - 1, acc))) +
+                t.dailyLabConfirmedCases) /
+            smoothingDays,
+    },
+    ...acc,
+];
 
-export const fill = (ts: TimeSeriesItem[]): TimeSeriesItem[] => R.reverse(R.reduce(filler, [], ts))
+export const smooth = (ts: TimeSeriesItem[]): SmoothedTimeSeriesItem[] => R.reduceRight(smoother, [], ts);
 
-export const estr =  (ts: SmoothedTimeSeriesItem[]): EstimatedTimeSeriesItem[] => 
-    R.reduceRight(rcalculator, [], ts)
+export const fill = (ts: TimeSeriesItem[]): TimeSeriesItem[] => R.reverse(R.reduce(filler, [], ts));
+
+export const estr = (ts: SmoothedTimeSeriesItem[]): EstimatedTimeSeriesItem[] => R.reduceRight(rcalculator, [], ts);
 
 export const slugify = (s: string): string => s.toLowerCase().replace(/ /g, '-');
 
@@ -136,18 +142,18 @@ export const makeApiReady = (g: GroupedEstimatedTimeSeries): APIReady => {
             labels,
             cases,
             estr,
-        }
+        };
     }
     return d;
-}
+};
 
 export const getApiReadyData = async () => {
     const raw = await loadDataFromUrl(sourceUrl);
     const metadata = raw.metadata;
     const d = R.pipe(loadTimeSeries, group)(raw);
-    const e = R.map<GroupedTimeSeries,GroupedEstimatedTimeSeries>(R.compose(estr, smooth, fill), d);
+    const e = R.map<GroupedTimeSeries, GroupedEstimatedTimeSeries>(R.compose(estr, smooth, fill), d);
     return {
         data: makeApiReady(e),
         metadata,
-    }
+    };
 };
