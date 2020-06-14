@@ -3,6 +3,9 @@ import * as R from 'ramda';
 import * as moment from 'moment';
 import fetch from 'node-fetch';
 
+const incubationDays = 5;
+const smoothingDays = 7;
+
 const sourceUrl = 'https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json';
 
 export interface TimeSeriesItem {
@@ -106,19 +109,30 @@ export const sumCases = R.pipe(R.map(R.prop('dailyLabConfirmedCases')), R.sum)
 
 function *rseries(ts: TimeSeriesItem[]): Generator<EstimatedTimeSeriesItem> {
     for(let i=0; i< ts.length; i++) {
-        const slice1 = ts.slice(i, i+7);
-        const slice2 = ts.slice(i+1, i+8);
+        const slice1 = ts.slice(i, i+smoothingDays);
+        const slice2 = ts.slice(i+incubationDays, i+incubationDays+smoothingDays);
         const sum1 = sumCases(slice1);
         const sum2 = sumCases(slice2);
         yield {
             ...ts[i],
-            r: sum1/sum2
+            r: sum1/sum2,
         }
     }
 }
 
-export const fill = (series: TimeSeriesItem[]): EstimatedTimeSeriesItem[] =>
-    Array.from(rseries(Array.from(filledTimeSeries(series))));
+function *smooth(ts: TimeSeriesItem[]) : Generator<TimeSeriesItem> {
+    for(let i=0; i< ts.length; i++) {
+        yield {
+            ...ts[i],
+            dailyLabConfirmedCases: sumCases(ts.slice(i, i+smoothingDays))/smoothingDays,
+        }
+    }
+}
+
+export const fillAndSmooth = (series: TimeSeriesItem[]): EstimatedTimeSeriesItem[] =>
+    Array.from(rseries(Array.from(smooth(Array.from(filledTimeSeries(series))))));
+
+
 
 export const slugify = (s: string): string => s.toLowerCase().replace(/ /, '-');
 
@@ -144,6 +158,6 @@ export const makeApiReady = (g: GroupedEstimatedTimeSeries): APIReady => {
 export const getApiReadyData = async () => {
     const raw = await loadDataFromUrl(sourceUrl);
     const d = getData(raw);
-    const e = R.map<GroupedTimeSeries,GroupedEstimatedTimeSeries>(fill, d);
+    const e = R.map<GroupedTimeSeries,GroupedEstimatedTimeSeries>(fillAndSmooth, d);
     return makeApiReady(e);
 };

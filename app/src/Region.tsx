@@ -14,21 +14,12 @@ const graphData = async (slug: string) => {
             data: data.estr.slice(data.estr.length-20, data.estr.length),
         }]
     }
-    // return {
-    //     labels: ['2020-04-29T00:00:00+01:00', '2020-04-30T00:00:00+01:00', '2020-05-01T00:00:00+01:00'],
-    //     series: [
-    //         {
-    //             name: slug,
-    //             data: [53, 40, 45],
-    //         },
-    //     ],
-    // };
 };
 
 const options: Chartist.ILineChartOptions = {
     low: 0,
     axisX: {
-        divisor: 30,
+        divisor: 5,
         labelInterpolationFnc: (value: string) => {
             return moment(value).format('D MMM');
         },
