@@ -58,7 +58,10 @@ export const loadDataFromUrl = async (url: string): Promise<any> => {
 };
 
 export const loadTimeSeries = (data: any): RawTimeSeriesItem[] => {
-    const t = R.map(R.pick(['areaName', 'specimenDate', 'dailyLabConfirmedCases']), data.ltlas);
+    const t = R.map(
+        R.pick(['areaName', 'specimenDate', 'dailyLabConfirmedCases']),
+        data.ltlas.concat(data.regions).concat(data.countries),
+    );
     return (t as unknown) as RawTimeSeriesItem[];
 };
 
