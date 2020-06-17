@@ -36,10 +36,19 @@ const Intro = () => {
         <li>Case data is smoothed with a 7 day rolling average</li>
         <li>R is estimated from a day's 7 day case rolling average compared to the rolling average from 5 days previously, where 5 days appears to be the incubation period for the virus</li>
     </ul>
-    <h3>Accuracy</h3>
+    <h3>Health warning</h3>
+    <p>I put this together, just out of interest, on a Sunday morning. <strong>I am not an epidemiologist, and you should NOT take this data seriously. It is presented for interest only</strong>.</p>
+    <p> I think there is likely to be a good reason that 'R' values are not shown by region in the UK, and it may well have something to do with the data not justifying it.</p>
     <p>This data is based on test results so is strongly influenced by the size and scope of the testing regime, which has changed dramatically over the time series shown.</p>
     <p>I am not a statistician. I am not your statistician. This could all be complete bobbins.</p>
     <p>Seriously, don't base any decisions on these charts.</p>
+    <p>If you are in any doubt please bear in mind that:</p>
+        <ul>
+            <li>Coronavirus is still very much out there,</li>
+            <li>it is potentially deadly and</li>
+            <li>it has no effective vaccine or treatment</li>
+        </ul>
+        <p>Stay home if you can.</p>
     <h3>Source code</h3>
     <p>You can find the source for this <a href="https://github.com/winjer/restimate">on Github</a>. Pull requests welcome.</p>
     <small>&copy; 2020, Doug Winter</small>
